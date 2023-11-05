@@ -1,0 +1,296 @@
+1) creating database
+CREATE DATABASE test;
+\l -> shows the list of all databases
+psql --help
+
+2) connect to database
+psql -h localhost -p 5432 -U postgres test;
+-c test
+
+3) delete a database
+DROP DATABASE test;
+//its a dangerous command so use it carefully
+
+
+4) create table
+CREATE TABLE table_name (
+	Column name + data type + constraints if any
+)
+
+CREATE TABLE person(
+	id int,
+	first_name VARCHAR(50),
+	gender VARCHAR(6),
+	date_of_birth TIMESTAMP,
+)
+CREATE TABLE person(
+	id BIGSERIAL NOT NULL PRIMARY KEY,
+	first_name VARCHAR(50) NOT NULL,
+	gender VARCHAR(6) NOT NULL,
+	date_of_birth TIMESTAMP NOT NULL,
+)
+//here BIGSERIAL is signed integer and auto-increments
+
+5) insert into tables
+INSERT INTO person(
+	first_name,
+	last_name,
+	gender,
+	date_of_birth)
+VALUES ('RIYA','MEHERE','FEMALE',DATE '2000-11-02');
+					YYYY-MM-DD
+6) SELECT FROM
+SELECT * FROM person;
+SELECT first_name, last_name FROM person;
+
+->using mockaroo website for generating table data
+executing the person.sql file
+\i /Users/Riya/Documents/person.sql
+
+7)ORDER BY
+SELECT * FROM person ORDER BY country_of_birth ASC;
+SELECT * FROM person ORDER BY country_of_birth DESC;
+SELECT * FROM person ORDER BY id ASC;
+SELECT * FROM person ORDER BY first_name ASC;
+
+8) DISTINCT
+(To avoid getting duplicate , through this we can get the unique elements)
+SELECT DISTINCT country_of_birth FROM person BY country_of_birth ASC;
+
+9)WHERE Clause and AND
+(allows us to filter data based on the conditions)
+SELECT * FROM person WHERE gender = 'Female';
+SELECT * FROM person WHERE gender = 'Male' AND (country_of_birth = 'Poland' OR country_of_birth='China');
+
+10)COMPARISON OPERATORS
+SELECT 1 = 1; RETURNS TRUE
+	>=,=,<= ETC
+
+11) LIMIT, OFFSET & FETCH
+SELECT * FROM PERSON LIMIT 10; (limiting the result by 10, only first 10 records aree shown)
+SELECT * FROM person OFFSET 5 LIMIT 5; (starts from 5th row by setting offset)
+SELECT * FROM person OFFSET 5 FETCH FIRST 5 ROWS ONLY;
+
+12) IN (Takes an array of values, and then returns the query matching those values)
+SELECT * FROM person WHERE country_of_birth ='China' OR country_of_birth ='France' OR country_of_birth ='Brazil';
+SELECT * FROM person WHERE country_of_birth IN ('China','France','Brzail');
+
+13) BETWEEN (to select data from a particular range)
+SELECT * FROM person WHERE data_of_birth BETWEEN DATE'2000-01-01 AND '2015-01-01';
+
+14) LIKE AND ILIKE OPERATOR
+SELECT * FROM person WHERE email LIKE '%google.com';
+SELECT * FROM person WHERE email LIKE '________@%';
+SELECT * FROM person WHERE country_of_birth ILIKE 'p%'; //ILIKE IGNORES THE SMALL CASE
+
+15) GROUP BY
+SELECT DISTINCT country_of_birth FROM person;
+
+//how many people we have in each country
+SELECT country_of_birth, COUNT(*) FROM person GROUP BY country_of_birth ORDER BY country_of_birth;
+
+16) GROUP BY HAVING KEYWORD
+SELECT country_of_birth, COUNT(*) FROM person GROUP BY country_of_birth HAVING COUNT(*) > 5 ORDER BY country_of_birth;
+
+
+car.sql inserted
+create table car (
+	id BIGSERIAL NOT NULL,
+	make VARCHAR(50) NOT NULL,
+	model VARCHAR(50) NOT NULL,
+	price INT NOT NULL
+);
+
+17) MIN ,MAX,AVERAGE
+SELECT MAX(price) FROM car;
+SELECT MIN(price) FROM car;
+SELECT ROUND(AVG(price)) FROM car;
+
+SELECT make, model , MIN(price) FROM car GROUP BY make,model;
+
+18) SUM
+//sum price of all single car
+SELECT SUM(price) FROM car;
+SELECT make, SUM(price) FROM car group by make;
+
+19) basics of arithemtic operators(+,-,/,^,!,%)
+SELECT 10+2;
+SELECT 10-2;
+
+ //RETURN CAR WITH 10% DISCOUNT price
+SELECT id,make,model, PRICE, ROUND(price * .10,2) FROM car;
+
+20) ALIAS
+//IF WE DONT SPECIFY COLUMN NAME IT WILL GIVE THE FUNCTION NAME TO THE COLUMN as in the above case
+SELECT id,make,model, PRICE, ROUND(price * .10,2) AS ten_percent FROM car;
+
+21) COALESCE (allows us to have a default value, in case the first one is not present)
+SELECT COALESCE(1) AS number;
+
+//people not having email value, we want it to be writen as email not provided
+SELECT email COALESCE(email,'Email not provided') FROM person;
+
+22) NULLIF (DIVISION BY 0 EXCEPTION)
+SELECT NULLIF(10, 10) ->NULL
+SELECT NULLIF(10, 1) -<NULL
+
+23)timestamps and date
+SELECT NOW(); ->gives the current time stamp
+SELECT NOW()::DATE;
+SELECT NOW()::TIME;
+
+SELECT NOW()- INTERVAL '1 YEAR';
+SELECT NOW()+ INTERVAL '10 DAYS';
+
+24)EXTRACTING FIELDS
+SELECT EXTRACT(YEAR FROM NOW());
+//Extracting actual year
+
+25)AGE FUNCTION
+SELECT first_name,last_name,country_of_birth, dat_of_birth, AGE(NOW(), date_of_birth) FROM person;
+
+26)PRIMARY KEYS
+(uniquely identifies a record)
+2 records cannot have same id's
+//adding primary key
+ALTER TABLE person ADD PRIMARY KEY (id);
+
+27) UNIQUE CONSTRAINTS( allows us to have unique value per column)
+SELECT email,count(*) FROM person GROUP BY email;
+//for checking duplicate emails(if more than one person has same email)
+SELECT email,count(*) FROM person GROUP BY email HAVING COUNT(*)>1;
+
+//adding unique constraints
+ALTER TABLE person ADD CONSTRAINT unique_email_address UNIQUE (email);
+ALTER TABLE person ADD UNIQUE (email); //here we let contsraint be named by postgres
+
+28)CHECK CONSTRAINTS (it allows us to add a constraint based on a boolean condition)
+ALTER TABLE person ADD CONSTRAINT gender_constraint CHECK(gender = 'female' OR gender = 'Male');
+
+29) DELETE RECORDS
+DELETE FROM person;
+DELETE FROM person WHERE id=1011;
+DELETE FROM person WHERE gender = 'Female' AND country_of_birth ='England';
+
+30) UPDATE COMMAND (ALLOWS US TO UPDATE A COLUMN OR MULTIPLE COLUMNS BASED ON OUR WHERE CLAUSE)
+UPDATE person SET email = 'omar@gmail.com' WHERE id=2011;
+
+31)dealing with duplicate keys or errors
+ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (first_name) DO NOTHING;
+ON CONFLICT (id) DO UPDATE SET email = EXCLUDED.email; (allows to override existing
+data, if present,otherwise, insert a new)
+
+32) FOREIGN KEYS,JOINS,RELATIONSHIPS
+
+FOREIGN KEY - it is a column that refrences to primary key in another table
+car_id BIGINT REFERENCES car(id) UNIQUE (car_id);
+
+33)ADDING RELATIONSHIPS BETWEEN TABLES
+1) a person can have one car
+2) a car can belong to only one person
+
+CREATE TABLE person(
+	id BIGSERIAL NOT NULL PRIMARY KEY,
+	first_name VARCHAR(50) NOT NULL,
+	gender VARCHAR(6) NOT NULL,
+	date_of_birth TIMESTAMP NOT NULL,
+	car_id BIGINT REFERENCES car(id), //foreign key refering to the primary key of car table
+	UNIQUE(car_id)
+)
+CREATE TABLE car(
+	id BIGSERIAL NOT NULL PRIMARY KEY,
+	etc
+)
+34) updating foreign key column
+UPDATE person SET car_id=2 WHERE id=1;
+
+35) INNER JOINS (takes whatever is common in both tables)
+//performing inner join between 2 tables i.e person and car table
+//where car_id in person table links to the id in car table
+
+SELECT * FROM person JOIN car ON person.car_id =  car.id;
+
+\x ->comand for expanded display
+
+SELECT person.first_name , car.make, car.model, car.price FROM person JOIN car ON person.car_id = car.id;
+
+36) LEFT JOIN (return all rows from left and matching records from right table)
+SELECT * FROM person LEFT JOIN ON car.id =  person.car_id;
+
+SELECT * FROM PERSON WHERE car_id is NULL;
+
+36) deleting records with foreign keys
+//first we have to delete the foreign key relation
+
+37) exporting query results to CSV
+SELECT * FROM person LEFT JOIN car ON car.id =  person.car_id;
+\copy ( SELECT * FROM person LEFT JOIN car ON car.id =  person.car_id;) TO '/c/Users/Riya/Documents/results.csv' DELIMITER ',' CSV HEADER;
+
+38) serials and sequences
+BIGSERIAL ->auto increments an integer
+BIGINT  ->NOT NULL AUTO-INCREMENTS
+//to alter the sequence
+ALTER SEQUENCE person_id_seq RESTART WITH 10;
+
+39)EXTENSIONS (functions that can add extra functionality to our db)
+//displays all available extensions
+SELECT * FROM pg_available_extensions
+
+40) understanding UUID data type
+//universaly unique identifiers 
+//installing the uuid extension
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+//involke a function
+SELECT uuid_generate_v4();
+
+//every time generates a unique string so it can be used for primary keys
+//makes very hard for attackers or haclers
+//we will not get any clashes while migration dbs
+
+41) UUID AS PRIMARY KEYS
+CREATE TABLE person(
+	person_uuid UUID NOT NULL PRIMARY KEY,
+	first_name VARCHAR(50) NOT NULL,
+	gender VARCHAR(6) NOT NULL,
+	date_of_birth TIMESTAMP NOT NULL,
+	car_uuid UUID REFERENCES car(id), //foreign key refering to the primary key of car table
+	UNIQUE(car_uuid)
+)
+CREATE TABLE car(
+	car_uuid UUID NOT NULL PRIMARY KEY,
+	etc
+)
+SELECT * FROM person JOIN car ON person.car_uuid = car.car_uuid;
+SELECT car using(car_uuid);
+//performing left join
+SELECT * FROM person LEFT JOIN car USING( car_uuid) WHERE car.* IS NULL;
+
+
+
+
+
+
+
+
+
+ 
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
